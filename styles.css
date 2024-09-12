@@ -1,0 +1,210 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap');
+
+body {
+    font-family: Arial, sans-serif;
+    width: 300px;
+    padding: 20px;
+}
+
+h1, h2 {
+    color: #333;
+}
+
+.controls {
+    margin-bottom: 20px;
+}
+
+button {
+    padding: 10px 15px;
+    margin-right: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, opacity 0.3s;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+button:disabled {
+    background-color: #cccccc;
+    color: #666666;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+#actionList {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+#actionList div {
+    margin-bottom: 5px;
+    padding: 5px;
+    background-color: #e9ecef;
+    border-radius: 3px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 300px;
+}
+
+input {
+    padding: 5px;
+    border: 1px solid #ced4da;
+    border-radius: 3px;
+}
+
+#recotto-drawer {
+    all: initial;
+    position: fixed;
+    top: 0;
+    right: -300px;
+    width: 300px;
+    height: 100vh;
+    background-color: white;
+    box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+    transition: right 0.3s ease-in-out;
+    z-index: 2147483647;
+    font-family: 'Lato', sans-serif;
+    box-sizing: border-box;
+}
+
+#recotto-drawer * {
+    all: revert;
+    box-sizing: border-box;
+    font-family: 'Lato', sans-serif;
+}
+
+#recotto-drawer.open {
+    right: 0;
+}
+
+#recotto-drawer .recotto-drawer-handle {
+    position: absolute;
+    top: 50%;
+    left: -40px;
+    width: 40px;
+    height: 40px;
+    background-color: #dc3545;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 50% 0 0 50%;
+}
+
+#recotto-drawer .recotto-drawer-content {
+    padding: 20px;
+    height: 100%;
+    overflow-y: auto;
+}
+
+#recotto-drawer h1 {
+    color: #333;
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+#recotto-drawer .controls {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+#recotto-drawer .start-btn {
+    background-color: #28a745;
+    color: white;
+}
+
+#recotto-drawer .stop-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+#recotto-drawer button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, opacity 0.3s;
+    flex: 1;
+}
+
+#recotto-drawer button:hover {
+    opacity: 0.8;
+}
+
+#recotto-drawer button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#recotto-drawer .recording {
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+}
+
+#recotto-drawer .chevron-icon {
+    color: #6c757d;
+    cursor: pointer;
+    margin-right: 10px;
+    font-size: 18px;
+}
+
+#recotto-drawer .recording-name {
+    cursor: pointer;
+    font-weight: bold;
+    flex-grow: 1;
+}
+
+#recotto-drawer .actions-list {
+    margin-top: 5px;
+    padding-left: 20px;
+    list-style-type: none;
+}
+
+#recotto-drawer .actions-list.hidden {
+    display: none;
+}
+
+#recotto-drawer #saveRecording {
+    margin-top: 10px;
+    display: flex;
+    gap: 5px;
+}
+
+#recotto-drawer #recordingName {
+    flex-grow: 1;
+    padding: 5px;
+    border: 1px solid #ced4da;
+    border-radius: 3px;
+}
+
+#recotto-drawer #saveRecordingBtn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+#recotto-drawer #saveRecordingBtn:hover {
+    background-color: #218838;
+}
