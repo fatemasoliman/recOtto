@@ -1,9 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap');
 
 body {
-    font-family: Arial, sans-serif;
-    width: 300px;
-    padding: 20px;
+    margin: 0;
+    padding: 0;
+    font-family: 'Lato', sans-serif;
 }
 
 h1, h2 {
@@ -66,29 +66,83 @@ input {
 }
 
 #recotto-drawer {
-    all: initial;
     position: fixed;
-    top: 0;
-    right: -300px;
-    width: 300px;
-    height: 100vh;
-    background-color: white;
-    box-shadow: -2px 0 5px rgba(0,0,0,0.2);
-    transition: right 0.3s ease-in-out;
-    z-index: 2147483647;
-    font-family: 'Lato', sans-serif;
-    box-sizing: border-box;
-}
-
-#recotto-drawer * {
-    all: revert;
-    box-sizing: border-box;
-    font-family: 'Lato', sans-serif;
-}
-
-#recotto-drawer.open {
+    top: 50%;
     right: 0;
+    transform: translateY(-50%);
+    width: 50px;
+    background-color: #f8f9fa;
+    box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+    transition: width 0.3s ease-in-out;
+    z-index: 2147483647;
+    border-radius: 25px 0 0 25px;
+    overflow: hidden;
 }
+
+#recotto-drawer.expanded {
+    width: 300px;
+}
+
+.drawer-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+}
+
+.action-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    margin: 5px 0;
+    cursor: pointer;
+    font-size: 18px;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.start-btn {
+    background-color: #28a745;
+}
+
+.stop-btn {
+    background-color: #dc3545;
+}
+
+.expand-btn {
+    background-color: #007bff;
+}
+
+.action-button:hover {
+    transform: scale(1.1);
+}
+
+.expanded-content {
+    display: none;
+    padding: 20px;
+}
+
+#recotto-drawer.expanded .expanded-content {
+    display: block;
+}
+
+#recotto-drawer.expanded .drawer-content {
+    flex-direction: row;
+    justify-content: space-around;
+}
+
+/* Additional styles for expanded content */
+.expanded-content h1 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* You can add more styles for the expanded content here */
 
 #recotto-drawer .recotto-drawer-handle {
     position: absolute;
@@ -103,6 +157,7 @@ input {
     justify-content: center;
     cursor: pointer;
     border-radius: 50% 0 0 50%;
+    pointer-events: auto;
 }
 
 #recotto-drawer .recotto-drawer-content {
@@ -207,4 +262,73 @@ input {
 
 #recotto-drawer #saveRecordingBtn:hover {
     background-color: #218838;
+}
+
+.replay-icon {
+    cursor: pointer;
+    margin-left: 10px;
+    font-size: 14px;
+    color: #007bff;
+    padding: 5px;
+    border-radius: 50%;
+    background-color: #f0f0f0;
+    transition: background-color 0.3s;
+}
+
+.replay-icon:hover {
+    color: #0056b3;
+    background-color: #e0e0e0;
+}
+
+#recotto-container {
+    /* Your container styles */
+}
+
+#recotto-container * {
+    /* Reset styles for all elements inside your container */
+    all: initial;
+}
+
+#recotto-container .your-class {
+    /* Your specific styles */
+}
+
+/* Add more scoped styles as needed */
+
+.floating-buttons {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.floating-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 25px;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+#startRecording {
+    background-color: #4CAF50;
+}
+
+#stopRecording {
+    background-color: #f44336;
+}
+
+.floating-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.floating-button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }

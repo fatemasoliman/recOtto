@@ -1,19 +1,22 @@
-<div id="recotto-drawer" class="recotto-drawer">
-  <div class="recotto-drawer-handle">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
-    </svg>
-  </div>
-  <div class="recotto-drawer-content">
-    <h1>RecOtto</h1>
-    <div class="controls">
-      <button id="startRecord" class="start-btn">Start</button>
-      <button id="stopRecord" class="stop-btn" disabled>Stop</button>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Screen Recorder</title>
+  <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+<body>
+  <div id="recotto-drawer" class="compact">
+    <div class="drawer-content">
+      <button id="startRecording" class="action-button start-btn" title="Start Recording">▶</button>
+      <button id="stopRecording" class="action-button stop-btn" style="display: none;" title="Stop Recording">■</button>
+      <button id="expandDrawer" class="action-button expand-btn" title="Expand">≡</button>
     </div>
-    <div id="saveRecording" style="display: none;">
-      <input type="text" id="recordingName" placeholder="Enter recording name">
-      <button id="saveRecordingBtn">Save Recording</button>
+    <div class="expanded-content">
+      <h1>Screen Recorder</h1>
+      <!-- Add your existing drawer content here -->
     </div>
-    <div id="recordingsList"></div>
   </div>
-</div>
+
+  <script src="drawer.js"></script>
+</body>
+</html>

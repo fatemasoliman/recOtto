@@ -10,16 +10,16 @@
   "background": {
     "service_worker": "background.js"
   },
-  "action": {
-  },
+  "action": {},
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js", "drawer.js"]
+      "js": ["content.js", "drawer.js"],
+      "run_at": "document_idle"
     }
   ],
   "web_accessible_resources": [{
-    "resources": ["drawer.html", "styles.css"],
+    "resources": ["styles.css"],
     "matches": ["<all_urls>"]
   }]
 }

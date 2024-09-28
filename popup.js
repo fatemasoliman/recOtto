@@ -1,58 +1,24 @@
-let actions = [];
-let isRecording = false;
+document.addEventListener('DOMContentLoaded', function() {
+    const drawer = document.getElementById('recotto-drawer');
+    const expandButton = document.getElementById('expandDrawer');
+    const startButton = document.getElementById('startRecording');
+    const stopButton = document.getElementById('stopRecording');
 
-function updateUI() {
-    document.getElementById('startRecord').disabled = isRecording;
-    document.getElementById('stopRecord').disabled = !isRecording;
-}
-
-function updateActionList() {
-    const actionList = document.getElementById('actionList');
-    actionList.innerHTML = actions.map(action => `<div>${action.type}: ${action.target}</div>`).join('');
-}
-
-document.getElementById('startRecord').addEventListener('click', () => {
-    chrome.runtime.sendMessage({command: "startRecording"});
-    isRecording = true;
-    updateUI();
-});
-
-document.getElementById('stopRecord').addEventListener('click', () => {
-    chrome.runtime.sendMessage({command: "stopRecording"});
-    isRecording = false;
-    updateUI();
-});
-
-document.getElementById('replay').addEventListener('click', () => {
-    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-        chrome.tabs.sendMessage(tabs[0].id, {command: "replay", actions: actions});
+    expandButton.addEventListener('click', function() {
+        drawer.classList.toggle('expanded');
     });
+
+    startButton.addEventListener('click', function() {
+        startButton.style.display = 'none';
+        stopButton.style.display = 'flex';
+        // Add your start recording logic here
+    });
+
+    stopButton.addEventListener('click', function() {
+        stopButton.style.display = 'none';
+        startButton.style.display = 'flex';
+        // Add your stop recording logic here
+    });
+
+    // Add any other necessary event listeners or functionality
 });
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.type === "action") {
-        actions.push(message.action);
-        updateActionList();
-    } else if (message.type === "recordingStatus") {
-        isRecording = message.isRecording;
-        updateUI();
-    }
-});
-
-// Initialize UI
-updateUI();
-
-// Load saved actions and recording status
-chrome.storage.local.get(['actions', 'isRecording'], function(result) {
-    if (result.actions) {
-        actions = result.actions;
-        updateActionList();
-    }
-    if (result.isRecording !== undefined) {
-        isRecording = result.isRecording;
-        updateUI();
-    }
-});
-
-// Request current recording status when popup opens
-chrome.runtime.sendMessage({command: "getRecordingStatus"});
