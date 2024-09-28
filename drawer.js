@@ -269,11 +269,62 @@ function copyJsonToClipboard(button) {
 }
 
 function replayRecording(recording, name) {
-  chrome.runtime.sendMessage({
-    command: "replayRecording", 
-    recording: recording,
-    name: name
-  });
+  console.log(`Starting replay of recording: ${name}`);
+  
+  const actions = recording.actions;
+  let currentIndex = 0;
+
+  function executeNextAction() {
+    if (currentIndex >= actions.length) {
+      console.log('Replay completed');
+      return;
+    }
+
+    const action = actions[currentIndex];
+    console.log(`Executing action ${currentIndex + 1}/${actions.length}:`, action);
+
+    try {
+      const element = document.querySelector(action.target);
+      
+      if (!element) {
+        console.error(`Element not found: ${action.target}`);
+        currentIndex++;
+        setTimeout(executeNextAction, 500); // Move to next action after a delay
+        return;
+      }
+
+      switch (action.type) {
+        case 'click':
+          element.click();
+          break;
+        case 'input':
+          if (action.value !== undefined) {
+            if (element.isContentEditable) {
+              element.textContent = action.value;
+              element.dispatchEvent(new Event('input', { bubbles: true }));
+            } else {
+              element.value = action.value;
+              element.dispatchEvent(new Event('input', { bubbles: true }));
+              element.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+          } else {
+            console.warn('Input action without value:', action);
+          }
+          break;
+        default:
+          console.warn(`Unknown action type: ${action.type}`);
+      }
+
+      currentIndex++;
+      setTimeout(executeNextAction, 500); // Wait 500ms before next action
+    } catch (error) {
+      console.error(`Error executing action:`, error);
+      currentIndex++;
+      setTimeout(executeNextAction, 500); // Move to next action after a delay
+    }
+  }
+
+  executeNextAction();
 }
 
 function deleteRecording(name, shadowRoot) {
