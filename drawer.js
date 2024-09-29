@@ -213,6 +213,7 @@ function saveRecording(shadowRoot) {
         loadSavedRecordings(shadowRoot);
         shadowRoot.getElementById('saveRecording').style.display = 'none';
         shadowRoot.getElementById('recordingName').value = '';
+        currentActions = []; // Reset current actions after saving
       }
     });
   }
@@ -232,7 +233,7 @@ function loadSavedRecordings(shadowRoot) {
           <button class="delete-btn">Delete</button>
           <button class="view-json-btn">View JSON</button>
         </div>
-        <div class="recording-json">
+        <div class="recording-json" style="display: none;">
           <pre>${JSON.stringify(recording.actions, null, 2)}</pre>
           <button class="copy-json-btn">Copy JSON</button>
         </div>
@@ -272,59 +273,14 @@ function replayRecording(recording, name) {
   console.log(`Starting replay of recording: ${name}`);
   
   const actions = recording.actions;
-  let currentIndex = 0;
-
-  function executeNextAction() {
-    if (currentIndex >= actions.length) {
-      console.log('Replay completed');
-      return;
-    }
-
-    const action = actions[currentIndex];
-    console.log(`Executing action ${currentIndex + 1}/${actions.length}:`, action);
-
-    try {
-      const element = document.querySelector(action.target);
-      
-      if (!element) {
-        console.error(`Element not found: ${action.target}`);
-        currentIndex++;
-        setTimeout(executeNextAction, 500); // Move to next action after a delay
-        return;
-      }
-
-      switch (action.type) {
-        case 'click':
-          element.click();
-          break;
-        case 'input':
-          if (action.value !== undefined) {
-            if (element.isContentEditable) {
-              element.textContent = action.value;
-              element.dispatchEvent(new Event('input', { bubbles: true }));
-            } else {
-              element.value = action.value;
-              element.dispatchEvent(new Event('input', { bubbles: true }));
-              element.dispatchEvent(new Event('change', { bubbles: true }));
-            }
-          } else {
-            console.warn('Input action without value:', action);
-          }
-          break;
-        default:
-          console.warn(`Unknown action type: ${action.type}`);
-      }
-
-      currentIndex++;
-      setTimeout(executeNextAction, 500); // Wait 500ms before next action
-    } catch (error) {
-      console.error(`Error executing action:`, error);
-      currentIndex++;
-      setTimeout(executeNextAction, 500); // Move to next action after a delay
-    }
-  }
-
-  executeNextAction();
+  
+  // Send the exact actions to be replayed
+  chrome.runtime.sendMessage({
+    command: "replayRecording",
+    name: name,
+    recording: { actions: actions },
+    speed: 1 // You can adjust this if you want to control replay speed
+  });
 }
 
 function deleteRecording(name, shadowRoot) {

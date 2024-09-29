@@ -89,7 +89,7 @@ function replayActions(tabId, actions, speed) {
 }
 
 function saveRecording(name, actions, tab, sendResponse) {
-	const url = tab.url;  // Use the URL from the tab object
+	const url = tab.url;
 	console.log(`Saving recording "${name}" with URL: ${url}`);
 	const recording = {
 		url: url,

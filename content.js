@@ -1,6 +1,8 @@
 console.log('Content script loaded');
 
 let recording = false;
+let inputDebounceTimer = null;
+const DEBOUNCE_DELAY = 500; // 500ms delay
 
 function getCssSelector(element) {
     let path = [];
@@ -30,32 +32,45 @@ function captureInputAction(event) {
     if (!recording) return;
 
     const target = event.target;
-    let value;
 
-    if (target.isContentEditable) {
-        value = target.textContent;
-    } else if (target.value !== undefined) {
-        value = target.value;
-    } else {
-        value = target.textContent;
+    // Clear any existing timer
+    if (inputDebounceTimer) {
+        clearTimeout(inputDebounceTimer);
     }
 
-    const action = {
-        type: 'input',
-        target: getCssSelector(target),
-        value: value
-    };
+    // Set a new timer
+    inputDebounceTimer = setTimeout(() => {
+        let value;
 
-    safeSendMessage({type: "action", action: action});
-    console.log("Input action recorded:", action);
+        if (target.isContentEditable) {
+            value = target.textContent;
+        } else if (target.value !== undefined) {
+            value = target.value;
+        } else {
+            value = target.textContent;
+        }
+
+        const action = {
+            type: 'input',
+            target: getCssSelector(target),
+            value: value
+        };
+
+        safeSendMessage({type: "action", action: action});
+        console.log("Input action recorded:", action);
+    }, DEBOUNCE_DELAY);
 }
 
-// Ensure this listener is added
+// Modify the existing input event listener
+document.removeEventListener('input', captureInputAction);
 document.addEventListener('input', captureInputAction);
 
-// Add a new listener for the 'blur' event
+// Modify the blur event listener to clear the timer and capture immediately
 document.addEventListener('blur', (event) => {
     if (recording && (event.target.isContentEditable || event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA')) {
+        if (inputDebounceTimer) {
+            clearTimeout(inputDebounceTimer);
+        }
         captureInputAction(event);
     }
 }, true);
