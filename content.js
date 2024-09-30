@@ -1,8 +1,6 @@
 console.log('Content script loaded');
 
 let recording = false;
-let inputDebounceTimer = null;
-const DEBOUNCE_DELAY = 500; // 500ms delay
 
 function getCssSelector(element) {
     let path = [];
@@ -32,45 +30,32 @@ function captureInputAction(event) {
     if (!recording) return;
 
     const target = event.target;
+    let value;
 
-    // Clear any existing timer
-    if (inputDebounceTimer) {
-        clearTimeout(inputDebounceTimer);
+    if (target.isContentEditable) {
+        value = target.textContent;
+    } else if (target.value !== undefined) {
+        value = target.value;
+    } else {
+        value = target.textContent;
     }
 
-    // Set a new timer
-    inputDebounceTimer = setTimeout(() => {
-        let value;
+    const action = {
+        type: 'input',
+        target: getCssSelector(target),
+        value: value
+    };
 
-        if (target.isContentEditable) {
-            value = target.textContent;
-        } else if (target.value !== undefined) {
-            value = target.value;
-        } else {
-            value = target.textContent;
-        }
-
-        const action = {
-            type: 'input',
-            target: getCssSelector(target),
-            value: value
-        };
-
-        safeSendMessage({type: "action", action: action});
-        console.log("Input action recorded:", action);
-    }, DEBOUNCE_DELAY);
+    safeSendMessage({type: "action", action: action});
+    console.log("Input action recorded:", action);
 }
 
-// Modify the existing input event listener
-document.removeEventListener('input', captureInputAction);
+// Ensure this listener is added
 document.addEventListener('input', captureInputAction);
 
-// Modify the blur event listener to clear the timer and capture immediately
+// Add a new listener for the 'blur' event
 document.addEventListener('blur', (event) => {
     if (recording && (event.target.isContentEditable || event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA')) {
-        if (inputDebounceTimer) {
-            clearTimeout(inputDebounceTimer);
-        }
         captureInputAction(event);
     }
 }, true);
@@ -78,26 +63,192 @@ document.addEventListener('blur', (event) => {
 document.addEventListener('click', (e) => {
     if (recording) {
         const action = { type: 'click', target: getCssSelector(e.target) };
+        
+        // Check if the clicked element is part of a custom dropdown
+        const dropdownOption = e.target.closest('[role="option"]');
+        if (dropdownOption) {
+            action.type = 'select';
+            action.value = dropdownOption.textContent.trim();
+            
+            // Find the parent dropdown container
+            const dropdownContainer = dropdownOption.closest('[class*="select"]');
+            if (dropdownContainer) {
+                action.dropdownSelector = getCssSelector(dropdownContainer);
+                
+                // Try to get the actual selected value
+                const input = dropdownContainer.querySelector('input');
+                if (input) {
+                    action.value = input.value;
+                }
+            }
+        }
+        
         safeSendMessage({type: "action", action: action});
-        console.log("Click action recorded:", action);
+        console.log("Action recorded:", action);
     }
 });
 
-document.addEventListener('change', (e) => {
-    if (recording) {
-        if (e.target.tagName === 'SELECT') {
-            const action = { type: 'select', target: getCssSelector(e.target), value: e.target.value };
-            safeSendMessage({type: "action", action: action});
-            console.log("Select action recorded:", action);
+// Remove or modify the existing 'change' event listener as it may not be needed for these custom dropdowns
+
+function replayAction(action) {
+    return new Promise((resolve, reject) => {
+        console.log("Attempting to replay action:", action);
+        let element;
+
+        if (action.type === 'select' && action.dropdownSelector) {
+            element = findElementFuzzy(action.dropdownSelector);
         } else {
-            // For custom dropdowns, we might need to capture the selected text
-            const selectedOption = e.target.querySelector('.selected') || e.target;
-            const action = { type: 'select', target: getCssSelector(e.target), value: selectedOption.textContent.trim() };
-            safeSendMessage({type: "action", action: action});
-            console.log("Custom select action recorded:", action);
+            element = findElementFuzzy(action.target);
         }
+
+        if (element) {
+            console.log("Element found:", element);
+            setTimeout(() => {
+                switch (action.type) {
+                    case 'click':
+                        console.log("Performing click on:", element);
+                        simulateMouseEvents(element, ['mouseover', 'mousedown', 'mouseup', 'click']);
+                        highlightElement(element, 'red');
+                        resolve({status: "success"});
+                        break;
+                    case 'select':
+                        console.log("Selecting option:", action.value);
+                        setReactSelectValue(element, action.value)
+                            .then(() => {
+                                highlightElement(element, 'green');
+                                resolve({status: "success"});
+                            })
+                            .catch((error) => {
+                                console.error('Failed to set dropdown value:', error);
+                                reject({status: "error", error: "Failed to set dropdown value"});
+                            });
+                        break;
+                    case 'input':
+                        console.log("Setting input value:", action.value);
+                        if (element.isContentEditable) {
+                            element.textContent = action.value;
+                        } else {
+                            element.value = action.value;
+                        }
+                        element.dispatchEvent(new Event('input', { bubbles: true }));
+                        element.dispatchEvent(new Event('change', { bubbles: true }));
+                        highlightElement(element, 'blue');
+                        resolve({status: "success"});
+                        break;
+                    default:
+                        console.error('Unknown action type:', action.type);
+                        reject({status: "error", error: `Unknown action type: ${action.type}`});
+                }
+            }, 500);
+        } else {
+            console.error('Element not found:', action.target);
+            reject({status: "error", error: `Element not found: ${action.target}`});
+        }
+    });
+}
+
+function setReactSelectValue(selectElement, value) {
+    return new Promise((resolve, reject) => {
+        console.log("Setting React Select value:", value);
+
+        // Simulate opening the dropdown
+        simulateMouseEvents(selectElement, ['mouseover', 'mousedown', 'mouseup', 'click']);
+
+        // Wait for the dropdown to open and options to appear
+        waitForOptions(value, 5000)
+            .then((option) => {
+                console.log("Option found:", option);
+                // Simulate hovering over the option
+                simulateMouseEvents(option, ['mouseover']);
+
+                // Wait a bit to simulate user decision time
+                setTimeout(() => {
+                    // Simulate clicking the option
+                    simulateMouseEvents(option, ['mousedown', 'mouseup', 'click']);
+
+                    // Wait for the dropdown to close
+                    setTimeout(() => {
+                        // Verify if the value was set correctly
+                        const input = selectElement.querySelector('input');
+                        if (input && input.value.trim().toLowerCase() === value.trim().toLowerCase()) {
+                            console.log("Value set successfully");
+                            resolve();
+                        } else {
+                            console.error("Failed to set value");
+                            reject(new Error('Failed to set dropdown value'));
+                        }
+                    }, 500);
+                }, 200);
+            })
+            .catch((error) => {
+                console.error("Error in setReactSelectValue:", error);
+                reject(error);
+            });
+    });
+}
+
+function simulateMouseEvents(element, events) {
+    events.forEach(eventType => {
+        const rect = element.getBoundingClientRect();
+        const event = new MouseEvent(eventType, {
+            view: window,
+            bubbles: true,
+            cancelable: true,
+            clientX: rect.left + rect.width / 2,
+            clientY: rect.top + rect.height / 2
+        });
+        element.dispatchEvent(event);
+    });
+}
+
+function waitForOptions(optionValue, timeout = 5000) {
+    return new Promise((resolve, reject) => {
+        const startTime = Date.now();
+        const intervalId = setInterval(() => {
+            const options = document.querySelectorAll('[role="option"]');
+            for (let option of options) {
+                if (option.textContent.trim().toLowerCase().includes(optionValue.toLowerCase())) {
+                    clearInterval(intervalId);
+                    resolve(option);
+                    return;
+                }
+            }
+            if (Date.now() - startTime > timeout) {
+                clearInterval(intervalId);
+                reject(new Error(`Option "${optionValue}" not found within ${timeout}ms`));
+            }
+        }, 100);
+    });
+}
+
+function setValueDirectly(element, value) {
+    const input = element.querySelector('input');
+    if (input) {
+        input.value = value;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        highlightElement(input, 'yellow');
+    } else {
+        console.error("Couldn't find input element to set value directly");
     }
-});
+}
+
+// Add this new function to wait for an element to appear in the DOM
+function waitForElement(selector, timeout = 5000) {
+    return new Promise((resolve, reject) => {
+        const startTime = Date.now();
+        const intervalId = setInterval(() => {
+            const element = document.querySelector(selector);
+            if (element) {
+                clearInterval(intervalId);
+                resolve(element);
+            } else if (Date.now() - startTime > timeout) {
+                clearInterval(intervalId);
+                reject(new Error(`Element ${selector} not found within ${timeout}ms`));
+            }
+        }, 100);
+    });
+}
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log("Message received in content script:", message);
@@ -146,46 +297,6 @@ function toggleDrawer() {
     } else {
         console.error("Drawer container not found");
     }
-}
-
-function replayAction(action) {
-    return new Promise((resolve, reject) => {
-        console.log("Attempting to replay action:", action);
-        let element = findElementFuzzy(action.target);
-
-        if (element) {
-            console.log("Element found:", element);
-            setTimeout(() => {
-                switch (action.type) {
-                    case 'click':
-                        console.log("Performing click on:", element);
-                        element.click();
-                        highlightElement(element, 'red');
-                        resolve({status: "success"});
-                        break;
-                    case 'input':
-                        console.log("Setting input value to:", action.value);
-                        if (element.isContentEditable) {
-                            element.textContent = action.value;
-                            element.dispatchEvent(new Event('input', { bubbles: true }));
-                        } else if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
-                            element.value = action.value;
-                            element.dispatchEvent(new Event('input', { bubbles: true }));
-                            element.dispatchEvent(new Event('change', { bubbles: true }));
-                        } else {
-                            element.textContent = action.value;
-                        }
-                        highlightElement(element, 'blue');
-                        resolve({status: "success"});
-                        break;
-                    // ... other cases remain the same
-                }
-            }, 100);
-        } else {
-            console.error('Element not found:', action.target);
-            reject({status: "error", error: `Element not found: ${action.target}`});
-        }
-    });
 }
 
 function highlightElement(element, color) {
