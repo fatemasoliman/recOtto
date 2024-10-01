@@ -250,55 +250,6 @@ function waitForElement(selector, timeout = 5000) {
     });
 }
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log("Message received in content script:", message);
-    if (message.command === "startRecording") {
-        recording = true;
-        console.log("Recording started");
-        sendResponse({status: "success"});
-    } else if (message.command === "stopRecording") {
-        recording = false;
-        console.log("Recording stopped");
-        sendResponse({status: "success"});
-    } else if (message.command === "replay") {
-        console.log("Replaying action:", message.action);
-        replayAction(message.action)
-            .then(() => {
-                console.log("Action replayed successfully");
-                sendResponse({status: "success"});
-            })
-            .catch((error) => {
-                console.error("Error replaying action:", error);
-                sendResponse({status: "error", error: error.message});
-            });
-        return true; // Indicates that the response is asynchronous
-    } else if (message.command === "toggleDrawer") {
-        console.log("Toggling drawer");
-        toggleDrawer();
-        sendResponse({status: "success"});
-    } else if (message.command === "stopReplay") {
-        console.log("Stopping replay");
-        sendResponse({status: "success"});
-    }
-    return true; // This line is important for asynchronous response
-});
-
-function toggleDrawer() {
-    const drawerContainer = document.getElementById('recotto-drawer-container');
-    if (drawerContainer) {
-        const drawer = drawerContainer.shadowRoot.getElementById('recotto-drawer');
-        if (drawer) {
-            console.log("Drawer found, toggling class");
-            drawer.classList.toggle('open');
-            console.log("Drawer is open:", drawer.classList.contains('open'));
-        } else {
-            console.error("Drawer element not found in shadow root");
-        }
-    } else {
-        console.error("Drawer container not found");
-    }
-}
-
 function highlightElement(element, color) {
     const originalOutline = element.style.outline;
     element.style.outline = `2px solid ${color}`;
@@ -355,7 +306,54 @@ function calculateSimilarity(str1, str2) {
     const intersection = new Set([...set1].filter(x => set2.has(x)));
     return intersection.size / Math.max(set1.size, set2.size);
 }
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    console.log("Message received in content script:", message);
+    if (message.command === "startRecording") {
+        recording = true;
+        console.log("Recording started");
+        sendResponse({status: "success"});
+    } else if (message.command === "stopRecording") {
+        recording = false;
+        console.log("Recording stopped");
+        sendResponse({status: "success"});
+    } else if (message.command === "replay") {
+        console.log("Replaying action:", message.action);
+        replayAction(message.action)
+            .then(() => {
+                console.log("Action replayed successfully");
+                sendResponse({status: "success"});
+            })
+            .catch((error) => {
+                console.error("Error replaying action:", error);
+                sendResponse({status: "error", error: error.message});
+            });
+        return true; // Indicates that the response is asynchronous
+    } else if (message.command === "toggleDrawer") {
+        console.log("Toggling drawer");
+        toggleDrawer();
+        sendResponse({status: "success"});
+    } else if (message.command === "stopReplay") {
+        console.log("Stopping replay");
+        sendResponse({status: "success"});
+    }
+    return true; // This line is important for asynchronous response
+});
 
+function toggleDrawer() {
+    const drawerContainer = document.getElementById('recotto-drawer-container');
+    if (drawerContainer) {
+        const drawer = drawerContainer.shadowRoot.getElementById('recotto-drawer');
+        if (drawer) {
+            console.log("Drawer found, toggling class");
+            drawer.classList.toggle('open');
+            console.log("Drawer is open:", drawer.classList.contains('open'));
+        } else {
+            console.error("Drawer element not found in shadow root");
+        }
+    } else {
+        console.error("Drawer container not found");
+    }
+}
 function injectStyles() {
     const link = document.createElement('link');
     link.href = chrome.runtime.getURL('styles.css');
