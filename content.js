@@ -2,6 +2,22 @@ console.log('Content script loaded');
 
 let recording = false;
 
+// Add this debounce function at the beginning of the file
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+// Keep track of the latest input state for each input
+let latestInputStates = {};
+
 function getCssSelector(element) {
     let path = [];
     while (element.nodeType === Node.ELEMENT_NODE) {
@@ -40,23 +56,40 @@ function captureInputAction(event) {
         value = target.textContent;
     }
 
-    const action = {
+    const inputId = target.id || target.name || getCssSelector(target);
+    
+    latestInputStates[inputId] = {
         type: 'input',
         target: getCssSelector(target),
         value: value
     };
-
-    safeSendMessage({type: "action", action: action});
-    console.log("Input action recorded:", action);
 }
 
-// Ensure this listener is added
-document.addEventListener('input', captureInputAction);
+// Create a debounced version of the function that sends the message
+const debouncedSendInputAction = debounce((inputId) => {
+    const action = latestInputStates[inputId];
+    if (action) {
+        safeSendMessage({type: "action", action: action});
+        console.log("Input action recorded:", action);
+        delete latestInputStates[inputId];
+    }
+}, 1000); // Adjust the debounce delay as needed (e.g., 1000ms = 1 second)
 
-// Add a new listener for the 'blur' event
+// Modify the input event listener
+document.addEventListener('input', (event) => {
+    if (recording) {
+        captureInputAction(event);
+        const inputId = event.target.id || event.target.name || getCssSelector(event.target);
+        debouncedSendInputAction(inputId);
+    }
+});
+
+// Modify the blur event listener
 document.addEventListener('blur', (event) => {
     if (recording && (event.target.isContentEditable || event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA')) {
         captureInputAction(event);
+        const inputId = event.target.id || event.target.name || getCssSelector(event.target);
+        debouncedSendInputAction.flush(); // Immediately send the latest state
     }
 }, true);
 

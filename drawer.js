@@ -13,7 +13,7 @@ function createDrawer() {
   const drawerHTML = `
     <div id="recotto-drawer" class="compact">
       <div class="drawer-content">
-        <button id="startRecording" class="action-button start-btn" title="Start Recording">▶</button>
+        <button id="startRecording" class="action-button start-btn" title="Start Recording"></button>
         <button id="stopRecording" class="action-button stop-btn" style="display: none;" title="Stop Recording">■</button>
         <button id="expandDrawer" class="action-button expand-btn" title="Expand">≡</button>
       </div>
@@ -34,141 +34,231 @@ function createDrawer() {
 
 function injectStyles(shadowRoot) {
   const style = document.createElement('style');
-  style.textContent = `
-    #recotto-drawer {
-      position: fixed;
-      top: 50%;
-      right: 0;
-      transform: translateY(-50%);
-      width: 50px;
-      background-color: #f8f9fa;
-      box-shadow: -2px 0 5px rgba(0,0,0,0.2);
-      transition: all 0.3s ease-in-out;
-      z-index: 2147483647;
-      border-radius: 25px 0 0 25px;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
-    }
+  
+  // Add Font Awesome CSS
+  fetch('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css')
+    .then(response => response.text())
+    .then(css => {
+      style.textContent += css;
+      
+      // Add our custom styles
+      style.textContent += `
+        #recotto-drawer {
+          position: fixed;
+          top: 50%;
+          right: 0;
+          transform: translateY(-50%);
+          width: 50px;
+          background-color: #f8f9fa;
+          box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+          transition: all 0.3s ease-in-out;
+          z-index: 2147483647;
+          border-radius: 25px 0 0 25px;
+          overflow: hidden;
+          font-family: Arial, sans-serif;
+        }
 
-    #recotto-drawer.expanded {
-      width: 250px;
-      height: 70vh;
-      transform: translateY(-35%);
-    }
+        #recotto-drawer.expanded {
+          width: 250px;
+          height: 70vh;
+          transform: translateY(-35%);
+        }
 
-    .drawer-content {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 10px;
-    }
+        .drawer-content {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 10px;
+        }
 
-    .action-button {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      border: none;
-      margin: 5px 0;
-      cursor: pointer;
-      font-size: 18px;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s ease;
-    }
+        .action-button {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          border: 2px solid #000;
+          margin: 5px 0;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.3s ease;
+          background-color: white;
+          position: relative;
+        }
 
-    .start-btn { background-color: #28a745; }
-    .stop-btn { background-color: #dc3545; }
-    .expand-btn { background-color: #007bff; }
+        .start-btn {
+          font-size: 0; /* Hide the text content */
+        }
 
-    .action-button:hover { transform: scale(1.1); }
+        .start-btn::after {
+          content: '';
+          width: 16px;
+          height: 16px;
+          background-color: #000;
+          border-radius: 50%;
+          position: absolute;
+        }
 
-    .expanded-content {
-      display: none;
-      padding: 15px;
-      height: calc(100% - 30px);
-      overflow-y: auto;
-    }
+        .start-btn.recording {
+          background-color: #ff0000;
+        }
 
-    #recotto-drawer.expanded .expanded-content { display: block; }
-    #recotto-drawer.expanded .drawer-content { flex-direction: row; justify-content: space-around; }
+        .start-btn.recording::after {
+          background-color: #fff;
+        }
 
-    #saveRecording {
-      margin-top: 10px;
-      display: flex;
-      gap: 5px;
-    }
+        .stop-btn {
+          background-color: #ff0000;
+        }
 
-    #recordingName {
-      flex-grow: 1;
-      padding: 5px;
-      border: 1px solid #ced4da;
-      border-radius: 3px;
-    }
+        .stop-btn::after {
+          content: '';
+          width: 16px;
+          height: 16px;
+          background-color: #fff;
+          position: absolute;
+        }
 
-    #saveRecordingBtn {
-      background-color: #28a745;
-      color: white;
-      border: none;
-      padding: 5px 10px;
-      border-radius: 3px;
-      cursor: pointer;
-    }
+        .expand-btn { 
+          background-color: #007bff; 
+          color: white;
+          border: none;
+        }
 
-    .recording {
-      margin-bottom: 10px;
-      border: 1px solid #ddd;
-      padding: 10px;
-      border-radius: 5px;
-      background-color: white;
-    }
+        .action-button:hover { transform: scale(1.1); }
 
-    .recording-name {
-      font-weight: bold;
-      margin-bottom: 5px;
-    }
+        .expanded-content {
+          display: none;
+          padding: 15px;
+          height: calc(100% - 30px);
+          overflow-y: auto;
+        }
 
-    .recording-actions {
-      display: flex;
-      gap: 5px;
-    }
+        #recotto-drawer.expanded .expanded-content { display: block; }
+        #recotto-drawer.expanded .drawer-content { flex-direction: row; justify-content: space-around; }
 
-    .recording-actions button {
-      background-color: #007bff;
-      color: white;
-      border: none;
-      padding: 3px 8px;
-      border-radius: 3px;
-      cursor: pointer;
-      font-size: 12px;
-    }
+        #saveRecording {
+          margin-top: 10px;
+          display: flex;
+          gap: 5px;
+        }
 
-    .recording-json {
-      display: none;
-      margin-top: 10px;
-      background-color: #f8f9fa;
-      border: 1px solid #ced4da;
-      border-radius: 3px;
-      padding: 10px;
-      font-family: monospace;
-      white-space: pre-wrap;
-      word-break: break-all;
-      font-size: 12px;
-    }
+        #recordingName {
+          flex-grow: 1;
+          padding: 5px;
+          border: 1px solid #ced4da;
+          border-radius: 3px;
+        }
 
-    .copy-json-btn {
-      background-color: #6c757d;
-      color: white;
-      border: none;
-      padding: 3px 8px;
-      border-radius: 3px;
-      cursor: pointer;
-      font-size: 12px;
-      margin-top: 5px;
-    }
-  `;
-  shadowRoot.appendChild(style);
+        #saveRecordingBtn {
+          background-color: #28a745;
+          color: white;
+          border: none;
+          padding: 5px 10px;
+          border-radius: 3px;
+          cursor: pointer;
+        }
+
+        .recording {
+          margin-bottom: 10px;
+          border: 1px solid #ddd;
+          padding: 10px;
+          border-radius: 5px;
+          background-color: white;
+        }
+
+        .recording-name {
+          font-weight: bold;
+          margin-bottom: 5px;
+        }
+
+        .recording-actions {
+          display: flex;
+          gap: 10px;
+        }
+
+        .recording-actions button {
+          background-color: #007bff;
+          color: white;
+          border: none;
+          padding: 3px 8px;
+          border-radius: 3px;
+          cursor: pointer;
+          font-size: 12px;
+        }
+
+        .recording-json {
+          display: none;
+          margin-top: 10px;
+          background-color: #f8f9fa;
+          border: 1px solid #ced4da;
+          border-radius: 3px;
+          padding: 10px;
+          font-family: monospace;
+          font-size: 12px;
+        }
+
+        .recording-json pre {
+          margin: 0;
+          white-space: pre-wrap;
+          word-break: break-all;
+          max-height: 200px;
+          overflow-y: auto;
+        }
+
+        .copy-json-btn {
+          display: block;
+          margin-bottom: 10px;
+          background-color: #6c757d;
+          color: white;
+          border: none;
+          padding: 5px 10px;
+          border-radius: 3px;
+          cursor: pointer;
+          font-size: 12px;
+        }
+
+        .icon-button {
+          background: white;
+          border: 2px solid #3137fd;
+          cursor: pointer;
+          padding: 5px;
+          font-size: 18px;
+          line-height: 1;
+          color: #3137fd;
+          transition: all 0.3s ease;
+          width: 30px;
+          height: 30px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .icon-button:hover {
+          background-color: #3137fd;
+          color: white;
+        }
+
+        .delete-btn {
+          color: #dc3545;
+          border-color: #dc3545;
+        }
+
+        .delete-btn:hover {
+          background-color: #dc3545;
+          color: white;
+        }
+
+        .recording-actions {
+          display: flex;
+          gap: 10px;
+        }
+      `;
+      
+      shadowRoot.appendChild(style);
+    })
+    .catch(error => console.error('Error loading Font Awesome CSS:', error));
 }
 
 function initializeDrawer(shadowRoot) {
@@ -178,8 +268,14 @@ function initializeDrawer(shadowRoot) {
   const expandButton = shadowRoot.getElementById('expandDrawer');
   const saveRecordingBtn = shadowRoot.getElementById('saveRecordingBtn');
 
-  startButton.addEventListener('click', () => startRecording(shadowRoot));
-  stopButton.addEventListener('click', () => stopRecording(shadowRoot));
+  startButton.addEventListener('click', () => {
+    startRecording(shadowRoot);
+    startButton.classList.add('recording');
+  });
+  stopButton.addEventListener('click', () => {
+    stopRecording(shadowRoot);
+    startButton.classList.remove('recording');
+  });
   expandButton.addEventListener('click', () => drawer.classList.toggle('expanded'));
   saveRecordingBtn.addEventListener('click', () => saveRecording(shadowRoot));
 
@@ -229,13 +325,13 @@ function loadSavedRecordings(shadowRoot) {
       recordingDiv.innerHTML = `
         <div class="recording-name">${name}</div>
         <div class="recording-actions">
-          <button class="replay-btn">Replay</button>
-          <button class="delete-btn">Delete</button>
-          <button class="view-json-btn">View JSON</button>
+          <button class="icon-button replay-btn" title="Replay">▶</button>
+          <button class="icon-button delete-btn" title="Delete">✕</button>
+          <button class="icon-button view-json-btn" title="View JSON">⋯</button>
         </div>
         <div class="recording-json" style="display: none;">
+          <button class="icon-button copy-json-btn" title="Copy JSON">⎘</button>
           <pre>${JSON.stringify(recording.actions, null, 2)}</pre>
-          <button class="copy-json-btn">Copy JSON</button>
         </div>
       `;
       recordingDiv.querySelector('.replay-btn').addEventListener('click', () => replayRecording(recording, name));
@@ -251,20 +347,24 @@ function toggleJsonView(button) {
   const jsonDiv = button.closest('.recording').querySelector('.recording-json');
   if (jsonDiv.style.display === 'none' || jsonDiv.style.display === '') {
     jsonDiv.style.display = 'block';
-    button.textContent = 'Hide JSON';
+    button.textContent = '−';
+    button.title = 'Hide JSON';
   } else {
     jsonDiv.style.display = 'none';
-    button.textContent = 'View JSON';
+    button.textContent = '⋯';
+    button.title = 'View JSON';
   }
 }
 
 function copyJsonToClipboard(button) {
-  const jsonContent = button.previousElementSibling.textContent;
+  const jsonContent = button.nextElementSibling.textContent;
   navigator.clipboard.writeText(jsonContent).then(() => {
     const originalText = button.textContent;
-    button.textContent = 'Copied!';
+    button.textContent = '✓';
+    button.title = 'Copied!';
     setTimeout(() => {
       button.textContent = originalText;
+      button.title = 'Copy JSON';
     }, 2000);
   });
 }
@@ -295,8 +395,16 @@ function deleteRecording(name, shadowRoot) {
 }
 
 function updateUI(shadowRoot) {
-  shadowRoot.getElementById('startRecording').style.display = isRecording ? 'none' : 'flex';
-  shadowRoot.getElementById('stopRecording').style.display = isRecording ? 'flex' : 'none';
+  const startButton = shadowRoot.getElementById('startRecording');
+  const stopButton = shadowRoot.getElementById('stopRecording');
+  
+  if (isRecording) {
+    startButton.style.display = 'none';
+    stopButton.style.display = 'flex';
+  } else {
+    startButton.style.display = 'flex';
+    stopButton.style.display = 'none';
+  }
 }
 
 function addAction(action) {
