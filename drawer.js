@@ -35,259 +35,245 @@ function createDrawer() {
 function injectStyles(shadowRoot) {
   const style = document.createElement('style');
   
-  // Add Font Awesome CSS
-  fetch('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css')
-    .then(response => response.text())
-    .then(css => {
-      style.textContent += css;
-      
-      // Add our custom styles
-      style.textContent += `
-        #recotto-drawer {
-          position: fixed;
-          top: 50%;
-          right: 0;
-          transform: translateY(-50%);
-          width: 50px;
-          background-color: #f8f9fa;
-          box-shadow: -2px 0 5px rgba(0,0,0,0.2);
-          transition: all 0.3s ease-in-out;
-          z-index: 2147483647;
-          border-radius: 25px 0 0 25px;
-          overflow: hidden;
-          font-family: Arial, sans-serif;
-        }
+  style.textContent = `
+    #recotto-drawer, #recotto-drawer * {
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.4;
+    }
 
-        #recotto-drawer.expanded {
-          width: 250px;
-          height: 70vh;
-          transform: translateY(-35%);
-        }
+    #recotto-drawer {
+      position: fixed;
+      top: 50%;
+      right: 0;
+      transform: translateY(-50%);
+      width: 50px;
+      background-color: #f5f5f5;
+      box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+      transition: all 0.3s ease-in-out;
+      z-index: 2147483647;
+      border-radius: 25px 0 0 25px;
+      overflow: hidden;
+    }
 
-        .drawer-content {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          padding: 10px;
-        }
+    #recotto-drawer.expanded {
+      width: 250px;
+      height: 70vh;
+      transform: translateY(-35%);
+    }
 
-        .action-button {
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          border: 2px solid #000;
-          margin: 5px 0;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.3s ease;
-          background-color: white;
-          position: relative;
-        }
+    .drawer-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px;
+    }
 
-        .start-btn {
-          font-size: 0; /* Hide the text content */
-        }
+    .action-button {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      margin: 5px 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      background-color: white;
+      color: black;
+    }
 
-        .start-btn::after {
-          content: '';
-          width: 16px;
-          height: 16px;
-          background-color: #000;
-          border-radius: 50%;
-          position: absolute;
-        }
+    .action-button:hover {
+      background-color: #e0e0e0;
+    }
 
-        .start-btn.recording {
-          background-color: #ff0000;
-        }
+    .action-button.start-btn {
+      position: relative;
+      overflow: hidden;
+    }
 
-        .start-btn.recording::after {
-          background-color: #fff;
-        }
+    .action-button.start-btn::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 16px;
+      height: 16px;
+      background-color: black;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
 
-        .stop-btn {
-          background-color: #ff0000;
-        }
+    .action-button.start-btn.recording {
+      background-color: black;
+    }
 
-        .stop-btn::after {
-          content: '';
-          width: 16px;
-          height: 16px;
-          background-color: #fff;
-          position: absolute;
-        }
+    .action-button.start-btn.recording::after {
+      background-color: red;
+      width: 12px;
+      height: 12px;
+    }
 
-        .expand-btn { 
-          background-color: #007bff; 
-          color: white;
-          border: none;
-        }
+    .expanded-content {
+      display: none;
+      padding: 15px;
+      height: calc(100% - 30px);
+      overflow-y: auto;
+    }
 
-        .action-button:hover { transform: scale(1.1); }
+    #recotto-drawer.expanded .expanded-content { display: block; }
+    #recotto-drawer.expanded .drawer-content { flex-direction: row; justify-content: space-around; }
 
-        .expanded-content {
-          display: none;
-          padding: 15px;
-          height: calc(100% - 30px);
-          overflow-y: auto;
-        }
+    h2 {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
 
-        #recotto-drawer.expanded .expanded-content { display: block; }
-        #recotto-drawer.expanded .drawer-content { flex-direction: row; justify-content: space-around; }
+    #saveRecording {
+      margin-top: 10px;
+      display: flex;
+      gap: 5px;
+    }
 
-        #saveRecording {
-          margin-top: 10px;
-          display: flex;
-          gap: 5px;
-        }
+    #recordingName {
+      flex-grow: 1;
+      padding: 5px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+    }
 
-        #recordingName {
-          flex-grow: 1;
-          padding: 5px;
-          border: 1px solid #ced4da;
-          border-radius: 3px;
-        }
+    #saveRecordingBtn {
+      background-color: white;
+      color: black;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
 
-        #saveRecordingBtn {
-          background-color: #28a745;
-          color: white;
-          border: none;
-          padding: 5px 10px;
-          border-radius: 3px;
-          cursor: pointer;
-        }
+    #saveRecordingBtn:hover {
+      background-color: #e0e0e0;
+    }
 
-        .recording {
-          margin-bottom: 10px;
-          border: 1px solid #ddd;
-          padding: 10px;
-          border-radius: 5px;
-          background-color: white;
-        }
+    .recording {
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 5px;
+      background-color: white;
+    }
 
-        .recording-name {
-          font-weight: bold;
-          margin-bottom: 5px;
-        }
+    .recording-name {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
 
-        .recording-actions {
-          display: flex;
-          gap: 10px;
-        }
+    .recording-actions {
+      display: flex;
+      gap: 10px;
+    }
 
-        .recording-actions button {
-          background-color: #007bff;
-          color: white;
-          border: none;
-          padding: 3px 8px;
-          border-radius: 3px;
-          cursor: pointer;
-          font-size: 12px;
-        }
+    .recording-actions button {
+      background-color: white;
+      color: black;
+      border: none;
+      padding: 3px 8px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
 
-        .recording-json {
-          display: none;
-          margin-top: 10px;
-          background-color: #f8f9fa;
-          border: 1px solid #ced4da;
-          border-radius: 3px;
-          padding: 10px;
-          font-family: monospace;
-          font-size: 12px;
-        }
+    .recording-actions button:hover {
+      background-color: #e0e0e0;
+    }
 
-        .recording-json pre {
-          margin: 0;
-          white-space: pre-wrap;
-          word-break: break-all;
-          max-height: 200px;
-          overflow-y: auto;
-        }
+    #capturedData {
+      max-height: 300px;
+      overflow-y: auto;
+      background-color: white;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 10px;
+      padding-right: 40px;
+      font-family: monospace;
+      font-size: 12px;
+      position: relative;
+    }
 
-        .copy-json-btn {
-          display: block;
-          margin-bottom: 10px;
-          background-color: #6c757d;
-          color: white;
-          border: none;
-          padding: 5px 10px;
-          border-radius: 3px;
-          cursor: pointer;
-          font-size: 12px;
-        }
+    #copyCapturedData {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: white;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      padding: 0;
+    }
 
-        .icon-button {
-          background: white;
-          border: 2px solid #3137fd;
-          cursor: pointer;
-          padding: 5px;
-          font-size: 18px;
-          line-height: 1;
-          color: #3137fd;
-          transition: all 0.3s ease;
-          width: 30px;
-          height: 30px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
+    #copyCapturedData:hover {
+      background-color: #e0e0e0;
+    }
 
-        .icon-button:hover {
-          background-color: #3137fd;
-          color: white;
-        }
+    #copyCapturedData svg {
+      width: 20px;
+      height: 20px;
+      fill: black;
+      transition: fill 0.3s ease;
+    }
 
-        .delete-btn {
-          color: #dc3545;
-          border-color: #dc3545;
-        }
+    .capture-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
 
-        .delete-btn:hover {
-          background-color: #dc3545;
-          color: white;
-        }
+    .capture-buttons .action-button {
+      width: 48%;
+      height: auto;
+      border-radius: 5px;
+      padding: 8px;
+    }
 
-        .recording-actions {
-          display: flex;
-          gap: 10px;
-        }
+    #loadingIndicator {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      z-index: 10000;
+    }
 
-        .action-button {
-          margin: 5px;
-          padding: 8px 12px;
-          background-color: #007bff;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          transition: background-color 0.3s;
-        }
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
 
-        .action-button:hover {
-          background-color: #0056b3;
-        }
-
-        #capturedData {
-          max-height: 300px;
-          overflow-y: auto;
-          background-color: #f8f9fa;
-          border: 1px solid #ced4da;
-          border-radius: 4px;
-          padding: 10px;
-          font-family: monospace;
-        }
-
-        #copyCapturedData {
-          margin-top: 10px;
-        }
-      `;
-      
-      shadowRoot.appendChild(style);
-    })
-    .catch(error => console.error('Error loading Font Awesome CSS:', error));
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  `;
+  
+  shadowRoot.appendChild(style);
 }
 
 function initializeDrawer(shadowRoot) {
@@ -297,27 +283,56 @@ function initializeDrawer(shadowRoot) {
   const expandButton = shadowRoot.getElementById('expandDrawer');
   const saveRecordingBtn = shadowRoot.getElementById('saveRecordingBtn');
 
+  startButton.innerHTML = ''; // Remove any existing content
   startButton.addEventListener('click', () => {
-    startRecording(shadowRoot);
-    startButton.classList.add('recording');
+    if (isRecording) {
+      stopRecording(shadowRoot);
+      startButton.classList.remove('recording');
+    } else {
+      startRecording(shadowRoot);
+      startButton.classList.add('recording');
+    }
   });
   stopButton.addEventListener('click', () => {
     stopRecording(shadowRoot);
     startButton.classList.remove('recording');
   });
-  expandButton.addEventListener('click', () => drawer.classList.toggle('expanded'));
-  saveRecordingBtn.addEventListener('click', () => saveRecording(shadowRoot));
+  expandButton.addEventListener('click', () => {
+    drawer.classList.toggle('expanded');
+    updateExpandedContent(shadowRoot);
+  });
+  if (saveRecordingBtn) {
+    console.log('Save button found');
+    saveRecordingBtn.addEventListener('click', () => {
+      console.log('Save button clicked');
+      saveRecording(shadowRoot);
+    });
+  } else {
+    console.error('Save button not found');
+  }
 
   loadSavedRecordings(shadowRoot);
+}
 
-  // Add new buttons
-  const captureFieldsBtn = createButton(shadowRoot, 'Capture Fields', captureAllFields);
-  const captureCookiesBtn = createButton(shadowRoot, 'Capture Cookies', captureCookies);
+function updateExpandedContent(shadowRoot) {
+  const expandedContent = shadowRoot.querySelector('.expanded-content');
+  
+  // Only update if the drawer is expanded
+  if (shadowRoot.getElementById('recotto-drawer').classList.contains('expanded')) {
+    const existingContent = expandedContent.innerHTML;
+    
+    expandedContent.innerHTML = `
+      <div class="capture-buttons">
+        <button id="captureFieldsBtn" class="action-button">Capture Fields</button>
+        <button id="captureCookiesBtn" class="action-button">Capture Cookies</button>
+      </div>
+      ${existingContent}
+    `;
 
-  // Append new buttons to the drawer
-  const drawerContent = shadowRoot.querySelector('.drawer-content');
-  drawerContent.appendChild(captureFieldsBtn);
-  drawerContent.appendChild(captureCookiesBtn);
+    // Add event listeners to the new buttons
+    shadowRoot.getElementById('captureFieldsBtn').addEventListener('click', () => captureAllFields(shadowRoot));
+    shadowRoot.getElementById('captureCookiesBtn').addEventListener('click', () => captureCookies(shadowRoot));
+  }
 }
 
 function createButton(shadowRoot, text, clickHandler) {
@@ -328,7 +343,28 @@ function createButton(shadowRoot, text, clickHandler) {
   return button;
 }
 
-function captureAllFields(shadowRoot) {
+// Add this function to create and show a loading indicator
+function showLoadingIndicator(shadowRoot) {
+  const loadingIndicator = document.createElement('div');
+  loadingIndicator.id = 'loadingIndicator';
+  loadingIndicator.innerHTML = `
+    <div class="spinner"></div>
+    <p>Processing fields...</p>
+  `;
+  shadowRoot.querySelector('.expanded-content').appendChild(loadingIndicator);
+}
+
+// Add this function to hide the loading indicator
+function hideLoadingIndicator(shadowRoot) {
+  const loadingIndicator = shadowRoot.getElementById('loadingIndicator');
+  if (loadingIndicator) {
+    loadingIndicator.remove();
+  }
+}
+
+// Modify the captureAllFields function
+async function captureAllFields(shadowRoot) {
+  showLoadingIndicator(shadowRoot);
   const fields = [];
 
   // Capture standard form inputs
@@ -366,8 +402,31 @@ function captureAllFields(shadowRoot) {
     });
   });
 
-  // Display captured fields
-  displayCapturedData(shadowRoot, 'Captured Fields', fields);
+  try {
+    // Capture screenshot
+    const screenshot = await captureScreenshot();
+    console.log('Screenshot captured successfully');
+
+    // Send to OpenAI
+    const response = await sendToOpenAI(fields, screenshot);
+
+    // Hide loading indicator
+    hideLoadingIndicator(shadowRoot);
+
+    // Display response or error message
+    if (response.error) {
+      console.error('Error from OpenAI:', response);
+      displayCapturedData(shadowRoot, 'Error', response);
+    } else {
+      displayCapturedData(shadowRoot, 'OpenAI Response', response);
+    }
+  } catch (error) {
+    console.error('Error in captureAllFields:', error);
+    hideLoadingIndicator(shadowRoot);
+    displayCapturedData(shadowRoot, 'Error', { 
+      error: `Failed to capture fields: ${error.message}`
+    });
+  }
 }
 
 function captureCookies(shadowRoot) {
@@ -376,8 +435,11 @@ function captureCookies(shadowRoot) {
     return { name, value };
   });
 
-  // Display captured cookies
-  displayCapturedData(shadowRoot, 'Captured Cookies', cookies);
+  if (cookies.length === 0) {
+    displayCapturedData(shadowRoot, 'Captured Cookies', { message: 'No cookies found for this domain.' });
+  } else {
+    displayCapturedData(shadowRoot, 'Captured Cookies', { cookies });
+  }
 }
 
 function displayCapturedData(shadowRoot, title, data) {
@@ -385,19 +447,62 @@ function displayCapturedData(shadowRoot, title, data) {
   drawer.classList.add('expanded');
 
   const expandedContent = shadowRoot.querySelector('.expanded-content');
+  let contentToDisplay;
+
+  if (data.error) {
+    contentToDisplay = JSON.stringify(data, null, 2);
+  } else if (data.content) {
+    contentToDisplay = data.content;
+  } else if (data.cookies) {
+    contentToDisplay = JSON.stringify(data.cookies, null, 2);
+  } else if (data.message) {
+    contentToDisplay = data.message;
+  } else if (data.partialContent) {
+    contentToDisplay = `Error: ${data.error}\n\nPartial content:\n${data.partialContent}`;
+  } else {
+    contentToDisplay = JSON.stringify(data, null, 2);
+  }
+
   expandedContent.innerHTML = `
     <h2>${title}</h2>
-    <pre id="capturedData">${JSON.stringify(data, null, 2)}</pre>
-    <button id="copyCapturedData" class="icon-button">Copy to Clipboard</button>
+    <pre id="capturedData">${contentToDisplay}</pre>
+    <button id="copyCapturedData" class="icon-button" title="Copy to Clipboard">
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+      </svg>
+    </button>
   `;
 
   const copyButton = expandedContent.querySelector('#copyCapturedData');
   copyButton.addEventListener('click', () => {
     const capturedData = expandedContent.querySelector('#capturedData').textContent;
     navigator.clipboard.writeText(capturedData).then(() => {
-      alert('Data copied to clipboard!');
+      copyButton.innerHTML = `
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+        </svg>
+      `;
+      setTimeout(() => {
+        copyButton.innerHTML = `
+          <svg viewBox="0 0 24 24" width="24" height="24">
+            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+          </svg>
+        `;
+      }, 2000);
     }).catch(err => {
       console.error('Failed to copy data: ', err);
+      copyButton.innerHTML = `
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+        </svg>
+      `;
+      setTimeout(() => {
+        copyButton.innerHTML = `
+          <svg viewBox="0 0 24 24" width="24" height="24">
+            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+          </svg>
+        `;
+      }, 2000);
     });
   });
 }
@@ -419,19 +524,32 @@ function stopRecording(shadowRoot) {
 function saveRecording(shadowRoot) {
   const name = shadowRoot.getElementById('recordingName').value;
   if (name) {
+    console.log('Attempting to save recording:', name);
+    console.log('Current actions:', currentActions);
     chrome.runtime.sendMessage({
       command: "saveRecording",
       name: name,
       actions: currentActions,
       url: window.location.href
     }, (response) => {
-      if (response.status === "saved") {
+      console.log('Save recording response:', response);
+      if (chrome.runtime.lastError) {
+        console.error('Error saving recording:', chrome.runtime.lastError);
+        alert('Failed to save recording: ' + chrome.runtime.lastError.message);
+      } else if (response && response.status === "saved") {
+        console.log('Recording saved successfully');
         loadSavedRecordings(shadowRoot);
         shadowRoot.getElementById('saveRecording').style.display = 'none';
         shadowRoot.getElementById('recordingName').value = '';
         currentActions = []; // Reset current actions after saving
+      } else {
+        console.error('Unexpected response when saving recording:', response);
+        alert('Failed to save recording: Unexpected response');
       }
     });
+  } else {
+    console.warn('Attempted to save recording without a name');
+    alert('Please enter a name for the recording');
   }
 }
 
@@ -529,6 +647,7 @@ function updateUI(shadowRoot) {
 
 function addAction(action) {
   if (isRecording) {
+    console.log('Adding action:', action);
     currentActions.push(action);
   }
 }
@@ -540,6 +659,128 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   sendResponse({status: "processed"});
   return true;
 });
+
+function captureScreenshot() {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage({command: "captureScreenshot"}, (response) => {
+      if (chrome.runtime.lastError) {
+        console.error('Error capturing screenshot:', chrome.runtime.lastError);
+        reject(new Error('Failed to capture screenshot: ' + chrome.runtime.lastError.message));
+      } else if (response && response.screenshot) {
+        resolve(response.screenshot);
+      } else if (response && response.error) {
+        console.error('Error capturing screenshot:', response.error);
+        reject(new Error('Failed to capture screenshot: ' + response.error));
+      } else {
+        console.error('Invalid response from captureScreenshot:', response);
+        reject(new Error('Invalid screenshot data'));
+      }
+    });
+  });
+}
+
+async function sendToOpenAI(fields, screenshot) {
+  const apiKey = CONFIG.OPENAI_API_KEY;
+  const prompt = `Here's a json of the form fields detected on a page, along with an image of how the page looks. Some of the form fields don't have human readable names. From the image, try to give every form field a human readable name. Edit the json to add a "label" value for each field and give it the human readable name. Return only the JSON object.`;
+
+  try {
+    if (!screenshot) {
+      throw new Error('Screenshot is undefined');
+    }
+
+    // Convert the screenshot data URL to base64
+    const base64Image = screenshot.split(',')[1];
+
+    if (!base64Image) {
+      throw new Error('Failed to extract base64 image data');
+    }
+
+    const requestBody = {
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            { 
+              type: "image_url",
+              image_url: {
+                url: `data:image/png;base64,${base64Image}`
+              }
+            },
+            { type: "text", text: JSON.stringify(fields) }
+          ]
+        }
+      ],
+      max_tokens: 5000, 
+      response_format: { "type": "json_object" }
+    };
+
+    // Log the full request (excluding the actual image data for brevity)
+    console.log('Full OpenAI request:', {
+      url: 'https://api.openai.com/v1/chat/completions',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer [API_KEY]' // Don't log the actual API key
+      },
+      body: {
+        ...requestBody,
+        messages: [
+          {
+            ...requestBody.messages[0],
+            content: requestBody.messages[0].content.map(item => 
+              item.type === 'image_url' ? { ...item, image_url: { url: '[BASE64_IMAGE_DATA]' } } : item
+            )
+          }
+        ]
+      }
+    });
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('API response not OK:', response.status, data);
+      return { error: `API error: ${response.status} - ${data.error?.message || JSON.stringify(data)}` };
+    }
+
+    console.log('Full API response:', data);
+
+    if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+      console.error('Unexpected API response structure:', data);
+      return { error: 'Unexpected API response structure', fullResponse: data };
+    }
+
+    let content = data.choices[0].message.content;
+    console.log('API response content:', content);
+
+    // Attempt to complete the JSON if it's incomplete
+    if (!content.endsWith('}')) {
+      content += ']}';
+    }
+
+    // Check if the content is valid JSON
+    try {
+      const parsedContent = JSON.parse(content);
+      return { content: JSON.stringify(parsedContent, null, 2) };
+    } catch (parseError) {
+      console.error('Error parsing API response:', parseError);
+      return { error: 'Incomplete or invalid JSON response from OpenAI', partialContent: content };
+    }
+  } catch (error) {
+    console.error('Error in sendToOpenAI:', error);
+    return { error: `Failed to process with OpenAI: ${error.message}` };
+  }
+}
 
 // Create the drawer when the script loads
 createDrawer();

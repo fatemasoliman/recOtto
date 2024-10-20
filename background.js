@@ -34,10 +34,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 		// Notify drawer that replay has stopped
 		chrome.tabs.sendMessage(sender.tab.id, {command: "updatePlayingRecording", name: null}).catch(console.error);
 	} else if (message.command === "saveRecording") {
-		saveRecording(message.name, message.actions, sender.tab, sendResponse);
+		console.log('Saving recording:', message.name);
+		console.log('Actions to save:', message.actions);
+		saveRecording(message.name, message.actions, sender.tab, (result) => {
+			console.log('Save recording result:', result);
+			sendResponse(result);
+		});
 		return true; // Indicates that the response is asynchronous
 	} else if (message.command === "deleteRecording") {
 		deleteRecording(message.name, sendResponse);
+		return true; // Indicates that the response is asynchronous
+	} else if (message.command === "captureScreenshot") {
+		chrome.tabs.captureVisibleTab(null, {format: 'png'}, (dataUrl) => {
+			if (chrome.runtime.lastError) {
+				console.error('Error capturing screenshot:', chrome.runtime.lastError);
+				sendResponse({error: chrome.runtime.lastError.message});
+			} else {
+				sendResponse({screenshot: dataUrl});
+			}
+		});
 		return true; // Indicates that the response is asynchronous
 	}
 	
@@ -88,7 +103,7 @@ function replayActions(tabId, actions, speed) {
 	performNextAction();
 }
 
-function saveRecording(name, actions, tab, sendResponse) {
+function saveRecording(name, actions, tab, callback) {
 	const url = tab.url;
 	console.log(`Saving recording "${name}" with URL: ${url}`);
 	const recording = {
@@ -98,8 +113,13 @@ function saveRecording(name, actions, tab, sendResponse) {
 	chrome.storage.local.get({recordings: {}}, (result) => {
 		result.recordings[name] = recording;
 		chrome.storage.local.set({recordings: result.recordings}, () => {
-			console.log(`Recording "${name}" saved successfully`);
-			sendResponse({status: "saved"});
+			if (chrome.runtime.lastError) {
+				console.error('Error saving recording:', chrome.runtime.lastError);
+				callback({status: "error", error: chrome.runtime.lastError.message});
+			} else {
+				console.log(`Recording "${name}" saved successfully`);
+				callback({status: "saved"});
+			}
 		});
 	});
 }
