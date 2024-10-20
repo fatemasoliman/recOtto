@@ -12,7 +12,7 @@ function createDrawer() {
 
   const drawerHTML = `
     <div id="recotto-drawer" class="compact">
-      <div class="drawer-content">
+      <div class="drawer-tab">
         <button id="startRecording" class="action-button start-btn" title="Start Recording"></button>
         <button id="stopRecording" class="action-button stop-btn" style="display: none;" title="Stop Recording">■</button>
         <button id="expandDrawer" class="action-button expand-btn" title="Expand">≡</button>
@@ -23,6 +23,10 @@ function createDrawer() {
           <button id="saveRecordingBtn">Save</button>
         </div>
         <div id="recordingsList"></div>
+        <div class="capture-buttons">
+          <button id="captureFieldsBtn" class="action-button">Capture Fields</button>
+          <button id="captureCookiesBtn" class="action-button">Capture Cookies</button>
+        </div>
       </div>
     </div>
   `;
@@ -36,6 +40,135 @@ function injectStyles(shadowRoot) {
   const style = document.createElement('style');
   
   style.textContent = `
+    #recotto-drawer {
+      position: fixed;
+      top: 50%;
+      right: 0;
+      transform: translateY(-50%);
+      width: 50px;
+      background-color: #f5f5f5;
+      box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+      transition: all 0.3s ease-in-out;
+      z-index: 2147483647;
+      border-radius: 25px 0 0 25px;
+      overflow: hidden;
+    }
+
+    #recotto-drawer.expanded {
+      width: 300px;
+      height: 70vh;
+      transform: translateY(-35%);
+    }
+
+    .drawer-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px;
+    }
+
+    .expanded-content {
+      display: none;
+      padding: 15px;
+      height: calc(100% - 30px);
+      overflow-y: auto;
+    }
+
+    #recotto-drawer.expanded .expanded-content { display: block; }
+    #recotto-drawer.expanded .drawer-tab { flex-direction: row; justify-content: space-around; }
+
+    .action-button {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      margin: 5px 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      background-color: white;
+      color: black;
+    }
+
+    .action-button:hover {
+      background-color: #e0e0e0;
+    }
+
+    .action-button.start-btn {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .action-button.start-btn::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 16px;
+      height: 16px;
+      background-color: black;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+
+    .action-button.start-btn.recording {
+      background-color: black;
+    }
+
+    .action-button.start-btn.recording::after {
+      background-color: red;
+      width: 12px;
+      height: 12px;
+    }
+
+    .recording {
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 5px;
+      background-color: white;
+    }
+
+    .recording-name {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .recording-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .recording-actions button {
+      background-color: white;
+      color: black;
+      border: none;
+      padding: 3px 8px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .recording-actions button:hover {
+      background-color: #e0e0e0;
+    }
+
+    .capture-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 15px;
+    }
+
+    .capture-buttons .action-button {
+      width: 48%;
+      height: auto;
+      border-radius: 5px;
+      padding: 8px;
+    }
+
     #recotto-drawer, #recotto-drawer * {
       font-family: Arial, sans-serif;
       font-size: 14px;
@@ -145,17 +278,16 @@ function injectStyles(shadowRoot) {
     }
 
     #saveRecordingBtn {
-      background-color: white;
-      color: black;
+      background-color: #28a745;
+      color: white;
       border: none;
       padding: 5px 10px;
       border-radius: 3px;
       cursor: pointer;
-      transition: all 0.3s ease;
     }
 
     #saveRecordingBtn:hover {
-      background-color: #e0e0e0;
+      background-color: #218838;
     }
 
     .recording {
@@ -231,19 +363,6 @@ function injectStyles(shadowRoot) {
       transition: fill 0.3s ease;
     }
 
-    .capture-buttons {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 15px;
-    }
-
-    .capture-buttons .action-button {
-      width: 48%;
-      height: auto;
-      border-radius: 5px;
-      padding: 8px;
-    }
-
     #loadingIndicator {
       position: fixed;
       top: 50%;
@@ -281,6 +400,8 @@ function initializeDrawer(shadowRoot) {
   const startButton = shadowRoot.getElementById('startRecording');
   const stopButton = shadowRoot.getElementById('stopRecording');
   const expandButton = shadowRoot.getElementById('expandDrawer');
+  const captureFieldsBtn = shadowRoot.getElementById('captureFieldsBtn');
+  const captureCookiesBtn = shadowRoot.getElementById('captureCookiesBtn');
   const saveRecordingBtn = shadowRoot.getElementById('saveRecordingBtn');
 
   startButton.innerHTML = ''; // Remove any existing content
@@ -293,46 +414,26 @@ function initializeDrawer(shadowRoot) {
       startButton.classList.add('recording');
     }
   });
+  
   stopButton.addEventListener('click', () => {
     stopRecording(shadowRoot);
     startButton.classList.remove('recording');
   });
+  
   expandButton.addEventListener('click', () => {
     drawer.classList.toggle('expanded');
-    updateExpandedContent(shadowRoot);
   });
+
+  captureFieldsBtn.addEventListener('click', () => captureAllFields(shadowRoot));
+  captureCookiesBtn.addEventListener('click', () => captureCookies(shadowRoot));
+
   if (saveRecordingBtn) {
-    console.log('Save button found');
-    saveRecordingBtn.addEventListener('click', () => {
-      console.log('Save button clicked');
-      saveRecording(shadowRoot);
-    });
+    saveRecordingBtn.addEventListener('click', () => saveRecording(shadowRoot));
   } else {
     console.error('Save button not found');
   }
 
   loadSavedRecordings(shadowRoot);
-}
-
-function updateExpandedContent(shadowRoot) {
-  const expandedContent = shadowRoot.querySelector('.expanded-content');
-  
-  // Only update if the drawer is expanded
-  if (shadowRoot.getElementById('recotto-drawer').classList.contains('expanded')) {
-    const existingContent = expandedContent.innerHTML;
-    
-    expandedContent.innerHTML = `
-      <div class="capture-buttons">
-        <button id="captureFieldsBtn" class="action-button">Capture Fields</button>
-        <button id="captureCookiesBtn" class="action-button">Capture Cookies</button>
-      </div>
-      ${existingContent}
-    `;
-
-    // Add event listeners to the new buttons
-    shadowRoot.getElementById('captureFieldsBtn').addEventListener('click', () => captureAllFields(shadowRoot));
-    shadowRoot.getElementById('captureCookiesBtn').addEventListener('click', () => captureCookies(shadowRoot));
-  }
 }
 
 function createButton(shadowRoot, text, clickHandler) {
@@ -556,12 +657,12 @@ function saveRecording(shadowRoot) {
 function loadSavedRecordings(shadowRoot) {
   chrome.storage.local.get({recordings: {}}, (result) => {
     const recordingsList = shadowRoot.getElementById('recordingsList');
-    recordingsList.innerHTML = '';
+    recordingsList.innerHTML = '<h2>Saved Recordings</h2>';
     Object.entries(result.recordings).forEach(([name, recording]) => {
       const recordingDiv = document.createElement('div');
       recordingDiv.className = 'recording';
       recordingDiv.innerHTML = `
-        <div class="recording-name">${name}</div>
+        <span class="recording-name">${name}</span>
         <div class="recording-actions">
           <button class="icon-button replay-btn" title="Replay">▶</button>
           <button class="icon-button delete-btn" title="Delete">✕</button>
@@ -572,10 +673,12 @@ function loadSavedRecordings(shadowRoot) {
           <pre>${JSON.stringify(recording.actions, null, 2)}</pre>
         </div>
       `;
+      
       recordingDiv.querySelector('.replay-btn').addEventListener('click', () => replayRecording(recording, name));
       recordingDiv.querySelector('.delete-btn').addEventListener('click', () => deleteRecording(name, shadowRoot));
       recordingDiv.querySelector('.view-json-btn').addEventListener('click', (e) => toggleJsonView(e.target));
       recordingDiv.querySelector('.copy-json-btn').addEventListener('click', (e) => copyJsonToClipboard(e.target));
+      
       recordingsList.appendChild(recordingDiv);
     });
   });
@@ -635,13 +738,20 @@ function deleteRecording(name, shadowRoot) {
 function updateUI(shadowRoot) {
   const startButton = shadowRoot.getElementById('startRecording');
   const stopButton = shadowRoot.getElementById('stopRecording');
+  const saveRecording = shadowRoot.getElementById('saveRecording');
   
   if (isRecording) {
     startButton.style.display = 'none';
     stopButton.style.display = 'flex';
+    saveRecording.style.display = 'none';
   } else {
     startButton.style.display = 'flex';
     stopButton.style.display = 'none';
+    if (currentActions.length > 0) {
+      saveRecording.style.display = 'flex';
+    } else {
+      saveRecording.style.display = 'none';
+    }
   }
 }
 
