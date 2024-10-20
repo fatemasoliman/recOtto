@@ -254,6 +254,35 @@ function injectStyles(shadowRoot) {
           display: flex;
           gap: 10px;
         }
+
+        .action-button {
+          margin: 5px;
+          padding: 8px 12px;
+          background-color: #007bff;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          transition: background-color 0.3s;
+        }
+
+        .action-button:hover {
+          background-color: #0056b3;
+        }
+
+        #capturedData {
+          max-height: 300px;
+          overflow-y: auto;
+          background-color: #f8f9fa;
+          border: 1px solid #ced4da;
+          border-radius: 4px;
+          padding: 10px;
+          font-family: monospace;
+        }
+
+        #copyCapturedData {
+          margin-top: 10px;
+        }
       `;
       
       shadowRoot.appendChild(style);
@@ -280,6 +309,97 @@ function initializeDrawer(shadowRoot) {
   saveRecordingBtn.addEventListener('click', () => saveRecording(shadowRoot));
 
   loadSavedRecordings(shadowRoot);
+
+  // Add new buttons
+  const captureFieldsBtn = createButton(shadowRoot, 'Capture Fields', captureAllFields);
+  const captureCookiesBtn = createButton(shadowRoot, 'Capture Cookies', captureCookies);
+
+  // Append new buttons to the drawer
+  const drawerContent = shadowRoot.querySelector('.drawer-content');
+  drawerContent.appendChild(captureFieldsBtn);
+  drawerContent.appendChild(captureCookiesBtn);
+}
+
+function createButton(shadowRoot, text, clickHandler) {
+  const button = document.createElement('button');
+  button.textContent = text;
+  button.className = 'action-button';
+  button.addEventListener('click', () => clickHandler(shadowRoot));
+  return button;
+}
+
+function captureAllFields(shadowRoot) {
+  const fields = [];
+
+  // Capture standard form inputs
+  document.querySelectorAll('input, select, textarea').forEach(el => {
+    fields.push({
+      type: el.tagName.toLowerCase(),
+      inputType: el.type,
+      name: el.name,
+      id: el.id,
+      value: el.value,
+      selector: getCssSelector(el)
+    });
+  });
+
+  // Capture contenteditable elements
+  document.querySelectorAll('[contenteditable="true"]').forEach(el => {
+    fields.push({
+      type: 'contenteditable',
+      name: el.getAttribute('name'),
+      id: el.id,
+      value: el.textContent,
+      selector: getCssSelector(el)
+    });
+  });
+
+  // Capture custom dropdowns and comboboxes
+  document.querySelectorAll('[role="listbox"], [role="combobox"]').forEach(el => {
+    const selectedOption = el.querySelector('[aria-selected="true"]');
+    fields.push({
+      type: 'custom-dropdown',
+      name: el.getAttribute('name'),
+      id: el.id,
+      value: selectedOption ? selectedOption.textContent : '',
+      selector: getCssSelector(el)
+    });
+  });
+
+  // Display captured fields
+  displayCapturedData(shadowRoot, 'Captured Fields', fields);
+}
+
+function captureCookies(shadowRoot) {
+  const cookies = document.cookie.split(';').map(cookie => {
+    const [name, value] = cookie.trim().split('=');
+    return { name, value };
+  });
+
+  // Display captured cookies
+  displayCapturedData(shadowRoot, 'Captured Cookies', cookies);
+}
+
+function displayCapturedData(shadowRoot, title, data) {
+  const drawer = shadowRoot.getElementById('recotto-drawer');
+  drawer.classList.add('expanded');
+
+  const expandedContent = shadowRoot.querySelector('.expanded-content');
+  expandedContent.innerHTML = `
+    <h2>${title}</h2>
+    <pre id="capturedData">${JSON.stringify(data, null, 2)}</pre>
+    <button id="copyCapturedData" class="icon-button">Copy to Clipboard</button>
+  `;
+
+  const copyButton = expandedContent.querySelector('#copyCapturedData');
+  copyButton.addEventListener('click', () => {
+    const capturedData = expandedContent.querySelector('#capturedData').textContent;
+    navigator.clipboard.writeText(capturedData).then(() => {
+      alert('Data copied to clipboard!');
+    }).catch(err => {
+      console.error('Failed to copy data: ', err);
+    });
+  });
 }
 
 function startRecording(shadowRoot) {
